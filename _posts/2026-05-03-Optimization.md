@@ -44,6 +44,15 @@ algorithms](https://arxiv.org/pdf/1609.04747)을 참고했다.
 $$
 \theta_{t+1} = \theta_t - \eta \nabla_{\theta} L(\theta_t)
 $$
+'''python
+class SGD:
+  def __init__(self, lr=0.01):
+    self.lr = lr
+
+  def update(self, params, grads):
+    for key in params.keys():
+      params[key]-=self.lr*grads[key]
+'''
 이걸 선택하면 문제가 생기는데 대표적으로 4가지가 있다. 글에서 발췌한 말에 따르면
 - 적절한 learning rate(lr)을 찾기 힘듦
 - lr 조정할 수 없음
@@ -51,5 +60,36 @@ $$
 - saddle point라고 어떤 dimension에선 하강하지만 어떤 dimension에서 올라갈때 막힐 수도 있음.
 
 4번째는 처음엔 이게 왜 하면서 이해 못했는데 Adam 공부하면서 알게 되었다. <br/>
-직관적으로 내려가야 할 곳에 안 내려가고 왔다갔다 하면서 뻐팅기면서 방해가 된다.
+*직관적으로 내려가야 할 곳에 안 내려가고 왔다갔다* 하면서 뻐팅기면서 방해가 된다.
+
+### Momentum
+lr조정하면서 적절한 lr을 찾으면 된다.
+그래서 물리학과 합쳐서 속도와 중력가속도를 이용했다.
+$$
+v_t = \gamma v_{t-1} + \eta \nabla_{\theta} J(\theta)
+$$
+$$
+\theta = \theta - v_t
+$$
+$\gamma$가 momentum 하이퍼 파라미터로 보통 0.9로 표현한다. 중력가속도이다.<br/>
+더 빠른 수렴(convergence)와 더 적은 진동(oscillation)을 보여준다.
+'''python
+class Momentum:
+  def __init__(self,lr=0.01, momentum=0.9):
+    self.lr=lr
+    self.momentum=momentum
+    self.v=None
+
+  def update(self, params, grads):
+    if self.v is None:
+      self.v={}
+      for key,val in params.items():
+        self.v[key]=np.zeros_like(val)
+
+    for key in params.keys():
+      self.v[key]=self.momentum*self.v[key]+self.lr*grads[key]
+      params[key]-=self.v[key]
+'''
+
+### Nesterov accelerated gradient (NAG)
 
