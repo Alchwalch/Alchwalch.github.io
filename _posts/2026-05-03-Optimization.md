@@ -44,7 +44,7 @@ algorithms](https://arxiv.org/pdf/1609.04747)을 참고했다.
 $$
 \theta_{t+1} = \theta_t - \eta \nabla_{\theta} L(\theta_t)
 $$
-'''python
+```python
 class SGD:
   def __init__(self, lr=0.01):
     self.lr = lr
@@ -52,7 +52,7 @@ class SGD:
   def update(self, params, grads):
     for key in params.keys():
       params[key]-=self.lr*grads[key]
-'''
+```
 이걸 선택하면 문제가 생기는데 대표적으로 4가지가 있다. 글에서 발췌한 말에 따르면
 - 적절한 learning rate(lr)을 찾기 힘듦
 - lr 조정할 수 없음
@@ -71,9 +71,9 @@ $$
 $$
 \theta = \theta - v_t
 $$
-$\gamma$가 momentum 하이퍼 파라미터로 보통 0.9로 표현한다. 중력가속도이다.<br/>
+$\gamma$가 momentum 하이퍼파라미터로 보통 0.9로 표현한다. 중력가속도이다.<br/>
 더 빠른 수렴(convergence)와 더 적은 진동(oscillation)을 보여준다.
-'''python
+```python
 class Momentum:
   def __init__(self,lr=0.01, momentum=0.9):
     self.lr=lr
@@ -89,7 +89,61 @@ class Momentum:
     for key in params.keys():
       self.v[key]=self.momentum*self.v[key]+self.lr*grads[key]
       params[key]-=self.v[key]
-'''
+```
 
 ### Nesterov accelerated gradient (NAG)
 
+근데 이게 관성의 법칙때문에 올라가고 있는데 속도가 나중에 낮춰져서 좀 느리게 갈 수도 있다는 문제가 있다.
+그래서 대략적인 **next position**을 줘서 거기서 기울기를 계산 하게 하자는 아이디어다.
+그러면 좀 더 빨리 수렴 할 수 있을 것이다. (increased responsiveness)
+$$
+v_t = \gamma v_{t-1} + \eta \nabla_{\theta} J(\theta - \gamma v_{t-1})
+$$
+$$
+\theta = \theta - v_t
+$$
+처음보는 옵티마이저였어서 기존 템플릿으로 코드를 짤려 했다. 그러나 걸리는게 있었다.
+파라미터가 현재 위치에 해당되는 값($\theta$)이 아니라<br/>
+미래위치에 해당되는 값($\theta - \gamma v_{t-1}$)에서 일어난다는 것이다.
+
+그래서 내가 생각한 아이디어는 함수 하나를 더 만들어서 미래위치에 해당되는 값(tmp)을 내보내는 함수를 만들고 (prev 함수) <br/>
+그 값(tmp)에서 backward시켜서 grads를 구하고 거기서 계산을 하면 되는 것이다.
+기울기를 구하는 일은 옵티마이저와 별개의 일이기 때문에 이것이 맞다고 생각하고 코드를 짰다.
+```python
+class NAG:
+  def __init__(self,lr=0.01, momentum=0.9):
+    self.lr=lr
+    self.momentum=momentum
+    self.v=None
+
+
+  def prev(self,params):
+    if self.v is None:
+      self.v={}
+
+      for key,val in params.items():
+        self.v[key]=np.zeros_like(val)
+
+    tmp={}
+
+    for key in params.keys():
+      tmp[key]=params[key]-self.momentum*self.v[key]
+
+    return tmp
+
+  def update(self, params, grads):
+
+    for key in params.keys():
+      self.v[key]=self.momentum*self.v[key]+self.lr*grads[key]
+      params[key]-=self.v[key]
+```
+파이토치는 아래와 같이 표현할 수 있다.
+```python
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
+```
+nesterov=True 는 prev함수 역할이랑 같은 역할을 한다.
+python은 interpreter로 돌아가는 고능아 언어이기 때문에
+보통 backward뒤에 optim을 쓰지만 문제는 없다. <br/>
+뭐 안 보고 스스로 생각해서 썼는데 진짜 이렇게 하니깐 좀 신기했다.
+
+### Adagrad
