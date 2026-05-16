@@ -44,3 +44,11 @@ algorithms](https://arxiv.org/pdf/1609.04747)을 참고했다.
 $$
 \theta_{t+1} = \theta_t - \eta \nabla_{\theta} L(\theta_t)
 $$
+이걸 선택하면 문제가 생기는데 대표적으로 4가지가 있다. 글에서 발췌한 말에 따르면
+- 적절한 learning rate(lr)을 찾기 힘듦
+- lr 조정할 수 없음
+- 모든 파라미터에 똑같은 lr 적용
+- saddle point라고 어떤 dimension에선 하강하지만 어떤 dimension에서 올라갈때 막힐 수도 있음.
+4번째는 처음엔 이게 왜 하면서 이해 못했는데 Adam 공부하면서 알게 되었다. <br/>
+직관적으로 내려가야 할 곳에 안 내려가고 왔다갔다 하면서 뻐팅기면서 방해가 된다.
+
