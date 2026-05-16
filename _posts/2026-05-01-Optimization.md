@@ -1,6 +1,6 @@
 ---
 title: "Optimizer 톺아보기 1"
-date: 2026-05-03 17:00:00 +0900
+date: 2026-05-01 17:00:00 +0900
 math: true
 categories: [DeepLearning]
 tags: [Learning and Optimizer]
@@ -147,3 +147,135 @@ python은 interpreter로 돌아가는 고능아 언어이기 때문에
 뭐 안 보고 스스로 생각해서 썼는데 진짜 이렇게 하니깐 좀 신기했다.
 
 ### Adagrad
+그러나 momentum계열의 옵티마이저는 못 고친 부분이 하나가 있다.
+- 모든 파라미터에 똑같은 lr 적용
+
+파라미터마다 다른 학습률을 적용할 필요가있으며 그렇게 등장한게 Adadelta이다.
+$$
+g_t = \nabla_{\theta_t} J(\theta_t)
+$$
+$$
+G_t = g_t \odot g_t
+$$
+$$
+\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{G_t + \epsilon}} \odot g_t
+$$
+더 정확히 하면
+$$
+\theta_{t+1,i} = \theta_{t,i} - \frac{\eta}{\sqrt{G_{t,ii} + \epsilon}} \cdot g_{t,i}
+$$
+이렇게 하면 자동으로 각각의 파라미터에 대한 학습률을 조정할 수 있다.<br/>
+(eliminates the need to manually tune the learning rate.)
+
+```python
+class Adagrad:
+  def __init__(self, lr=0.01):
+    self.lr = lr
+    self.h=None
+
+  def update(self, params, grads):
+    if self.h is None:
+      self.h={}
+      for key,val in params.items():
+        self.h[key]=np.zeros_like(val)
+
+    for key in params.keys():
+      self.h[key]+=grads[key]*grads[key]
+      params[key]-=self.lr*grads[key]/(np.sqrt(self.h[key])+1e-7)
+```
+
+아무튼 $\frac{1}{\sqrt{G_t + \epsilon}}$ 이렇게 곱하면서 학습률을 조정하는게 Ada계열이라 볼 수 있다.<br/>
+참고로 $/epsilon$ 은 루트값이 0보다 커야한다는 조건때문에 있는 아주 작은 수이다.
+
+### Adadelta
+Adagrad의 문제점은 학습이 어떻게 되든간에 lr을 계속 감소시킨다는 것이다. 그래서 결과 도달이 힘들 수 있다.
+그래서 Adadelta는 계속 누적시키는 대신에 평균을 사용하자고 제안한다. (recursively
+defined as a decaying average of all past squared gradients)
+
+$$
+E[g^2]_t = \gamma E[g^2]_{t-1} + (1-\gamma)g^2_t
+$$
+$$
+\Delta\theta_t = -\frac{\eta}{\sqrt{E[g^2]_t + \epsilon}} \cdot g_t
+$$
+$$
+\theta_{t+1} = \theta_t + \Delta\theta_t
+$$
+
+$\gamma$ 는 momentum term과 비슷한 의미를 가지며 0.9를 가진다.
+엄밀한 기댓값보단 대략적인 기댓값으로 이해하면 쉽다.
+
+아무튼 $E[g^2]_t$대신에 $RMS[g]_t$로 쓸 수 있다.
+$$
+\Delta\theta_t = -\frac{\eta}{\sqrt{RMS[g]_t + \epsilon}}g_t
+$$
+
+이때, 이거 만든 저자가 "the update should have the same hypothetical units as the parameter" 라고 한다. <br/>
+$\Delta\theta_t$가 좌변에 있고 우변에 없다는 것이 불편하다는 말이다. <br/>
+Hessian을 고려하면 납득 가능한 얘기다.
+$$
+E[\Delta\theta^2]_t = \gamma E[\Delta\theta^2]_{t-1} + (1-\gamma)\Delta\theta^2_t
+$$
+$$
+RMS[\Delta\theta]_t = \sqrt{E[\Delta\theta^2]_t + \epsilon}
+$$
+$$
+\Delta\theta_t = -\frac{RMS[\Delta\theta]_{t-1}}{RMS[g]_t} g_t
+$$
+$$
+\theta_{t+1} = \theta_t + \Delta\theta_t
+$$
+
+```python
+class Adadelta:
+  def __init__(self, momentum=0.9):
+    self.momentum=momentum
+    self.msdx=None
+    self.msg=None
+
+  def update(self,params,grads):
+    if self.msg is None:
+      self.msdx={}
+      self.msg={}
+      for key,val in params.items():
+        self.msdx[key]=np.zeros_like(val)
+        self.msg[key]=np.zeros_like(val)
+
+
+    for key in params.keys():
+      self.msg[key]=self.momentum*self.msg[key]+(1-self.momentum)*grads[key]*grads[key]
+      rms_dx = np.sqrt(self.msdx[key]+1e-7)
+      rms_g = np.sqrt(self.msg[key]+1e-7)
+      dx=-(rms_dx / rms_g) * grads[key]
+      self.msdx[key]=self.momentum*self.msdx[key]+(1-self.momentum)*dx*dx
+      params[key]+=dx
+```
+### RMSprop
+근데 학습을 돌려보면 아는게
+unit을 맞출려고 하는 부분이 개삽질이라는 것을 알 수 있다. 
+초반에 업데이트가 너무 느리고 학습률 조정이 불가능해
+실무에서는 거의 사용되지 않는다. 이러한 한계를 극복하고자 RMSprop이 등장한다.
+$$
+\Delta\theta_t = -\frac{\eta}{\sqrt{RMS[g]_t + \epsilon}}g_t
+$$
+그냥 여기서 끝내면 된다.
+```python
+class RMSprop:
+  def __init__(self, lr=0.01, momentum=0.9):
+    self.lr=lr
+    self.momentum=momentum
+    self.e=None
+
+  def update(self,params,grads):
+    if self.e is None:
+      self.e={}
+      for key,val in params.items():
+        self.e[key]=np.zeros_like(val)
+
+    for key in params.keys():
+      self.e[key]=self.momentum*self.e[key]+(1-self.momentum)*grads[key]*grads[key]
+      params[key]-=self.lr*grads[key]/(np.sqrt(self.e[key])+1e-7)
+```
+## 마무리
+
+너무 길어서 분량을 나눴다.
