@@ -1,6 +1,6 @@
 ---
 title: "Optimizer 톺아보기 1"
-date: 2026-05-03 17:00:00 +09:00
+date: 2026-05-03 17:00:00 +0900
 math: true
 categories: [DeepLearning]
 tags: [Learning and Optimizer]
@@ -18,10 +18,10 @@ tags: [Learning and Optimizer]
 그걸 수치로 나타낼 수 있는 함수는 목적함수라고 말할 수 있다. likelihood같이 높으면 높을 수록 좋다고 하는 경우도 있지만 
 대부분의 경우에는 목적을 의미하는 target값과 그 결과 값을 일치 할때의 목적함수가 보통이기에 
 낮을 수록 좋은 손실함수(혹은 criterion)를 쓴다.
-<bn/>
+<br/>
 손실함수는 낮은 값일 수록 좋은 것이고 최저점은 극소값에 위치한다.
 따라서 손실함수 결과가 극소값을 가질수록 유도하기 위해서 model의 parameter를 조작해야한다.
 목적함수 결과를 가지고 parameter를 조정하는게 옵티마이저라 볼 수 있다.
 
 옵티마이저 여러가지를 정리한 글인 [An overview of gradient descent optimization
-algorithms]"https://arxiv.org/pdf/1609.04747"을 참고했다.
+algorithms](https://arxiv.org/pdf/1609.04747)을 참고했다.
