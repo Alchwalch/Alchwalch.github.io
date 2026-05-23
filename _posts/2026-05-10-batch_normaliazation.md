@@ -15,7 +15,7 @@ Reducing Internal Covariate Shift](https://arxiv.org/pdf/1502.03167)
 
 ## 서론
 
-Batch Normalization을 쓰면 초깃값이 뭣같아도 괜찮아진다. 아니면 성능이 좋아진다. 간단한 공식 등 이정도만 알고 있었다. 이번에 다시 처음부터 공부하는 김에 이걸 왜 쓰는건지 그리고 어떻게 작동하는지 알아볼려고 한다.
+Batch Normalization을 쓰면 초깃값이 뭣같아도 괜찮아진다. 아니면 성능이 좋아진다. 간단한 공식 등 이정도만 알고 있었다. 이번에 다시 처음부터 공부하는 김에 이걸 왜 쓰는건지 그리고 어떻게 작동하는지 알아보려고 한다.
 
 ## Introduction
 
@@ -44,7 +44,8 @@ $$
 
 여기서 포인트는 입력 데이터 하나하나에서 정규화를 진행한다기 보단 **배치 집합에서 각 차원에 대한 값(per-dimension variance)을 정규화** 시킨 것이다. 공분산 행렬 계산 없이도 mini-batch 단위로 안정적으로 정규화할 수 있고, convergence속도를 높일 수 있다.
 
-여기서 끝내면 레이어가 표현하고 싶은 특징을 잘 표현하지 못할 수도 있다. 매 레이어가 평균이 0이고 분산이 1이면 좀 뭐시기 할 것이다. 이때 두 파라미터를 붙여서 분포는 fix하지만 평균과 분산을 다양하게 표현할 수 있다.
+여기서 끝내면 레이어가 표현하고 싶은 특징을 잘 표현하지 못할 수도 있다. 매 레이어가 평균이 0이고 분산이 1이면 좀 뭐시기 할 것일 뿐더러 whitening의 문제점인 bias가 무시될 수도 있다.<br/>
+이때 두 파라미터를 붙여서 분포는 fix하지만 평균과 분산을 다양하게 표현할 수 있다.
 
 $$
 y^{(k)} = \gamma^{(k)}\hat{x}^{(k)} + \beta^{(k)}
@@ -64,7 +65,7 @@ $$
 y^{(k)} = \gamma^{(k)}\hat{x}^{(k)} + \beta^{(k)}
 $$
 
-이므로 $\beta$를 구하고 그 다음 $\alpha$를 구해야 한다.
+이므로 $\beta$를 구하고 그 다음 $\gamma$를 구해야 한다.
 
 $$
 \frac{\partial \ell}{\partial \beta} = \sum_{i=1}^{m} \frac{\partial \ell}{\partial y_i}
@@ -92,7 +93,7 @@ $$
 \frac{\partial \ell}{\partial \hat{x}_i} \cdot \frac{1}{\sqrt{\sigma_\mathcal{B}^2 + \epsilon}} + \frac{\partial \ell}{\partial \sigma_\mathcal{B}^2} \cdot \frac{2(x_i - \mu_\mathcal{B})}{m}
 $$
 
-위의 공식의 차원은 (N,D)이지만 $\mu$에 대한 차원은 (D,)이다. 때문에 $\frac{2(x_i - \mu_\mathcal{B})}{m}$이 부분을 생략할 수 있으며 아래와 같이 표현할 수 있다.
+위의 공식의 차원은 (N,D)이지만 $\mu$에 대한 차원은 (D,)이다. $\sum_{i=1}^{m} \frac{2(x_i - \mu_\mathcal{B})}{m}=0$이므로 논문 보다 간결하게 아래와 같이 식을 나타낼 수 있다.
 
 $$
 \frac{\partial \ell}{\partial \mu_\mathcal{B}} = \sum_{i=1}^{m} \frac{\partial \ell}{\partial \hat{x}_i} \cdot \frac{-1}{\sqrt{\sigma_\mathcal{B}^2 + \epsilon}}
@@ -103,3 +104,39 @@ $$
 $$
 \frac{\partial \ell}{\partial x_i} = \frac{\partial \ell}{\partial \hat{x}_i} \cdot \frac{1}{\sqrt{\sigma_\mathcal{B}^2 + \epsilon}} + \frac{\partial \ell}{\partial \sigma_\mathcal{B}^2} \cdot \frac{2(x_i - \mu_\mathcal{B})}{m} + \frac{\partial \ell}{\partial \mu_\mathcal{B}} \cdot \frac{1}{m}
 $$
+
+## Inference with Batch-Normalization
+
+학습시와 달리 Inference(test data)시에는 mini-Batch를 사용할 수 없으며 또한 그렇게 해서도 안 된다. Inference시에는 결과를 deterministic하게 하기 위하여 고정된 평균과 분산을 이용하여 구하게 된다.
+이때, **고정된 값은 학습에 이용된 데이터들의 모집단** (population)을 이용하여 구한다. 
+
+$$
+E[x] \leftarrow E_\mathcal{B}[\mu_\mathcal{B}]
+$$
+
+$$
+\text{Var}[x] \leftarrow \frac{m}{m-1} E_\mathcal{B}[\sigma_\mathcal{B}^2]
+$$
+
+(참고로 $\frac{m}{m-1}$은 실무에선 잘 쓰지 않고 생략하는 편이다.)
+
+그 다음 똑같이 학습된 파라미터 $\gamma$와 $\beta$를 이용하여 결과를 도출한다.
+
+![Algorithm2](assets/img/batch3.png)
+
+## Convolutional Net에서 Batch-Normalization
+
+단순 2차원이 아닌 3차원 이상일때 어떻게 처리하는지 궁금할 수 있다. CNN에서는 channel을 기준으로 정규화 한다. 배치수가 n이고 이미지 크기가 p x q 일때 정규화 한 번 할때 계산되는 픽셀 수는 n x p x q 이다.
+
+pytorch 에선 Linear 계층을 정규화 할 때는 nn.BatchNorm1d를 사용하지만
+CNN같이 4차원을 다룰 때는 nn.BatchNorm2d를 사용한다.<br/>
+
+## 실습
+
+[Batch Normalization Colab](https://github.com/Alchwalch/Deep-Learning-Study/blob/main/Learning%20and%20Optimization/Batch_Normalization.ipynb)
+
+처음에 Sigmoid를 활성화 함수로 하고 실습했더니 Batch-Normalization을 안 썼을때가 성능이 더 좋은 것을 볼 수 있다. (위에 링크 참고) <br/>
+saturation problem을 해결하기 위해 쓴거 아닌가 라고 생각했는데 오히려 비선형성을 죽여버린 것이다. <br/>
+아마 층이 얕아서 saturation problem보단 비선형성이 두드러지는 곳에 쓰여서 결과가 안 좋게 나온 것 같다.
+
+그러나 ReLU랑 같이 쓸 때는 매우 성능이 좋았다. 초깃값 민감도가 해결된 것 같다.
