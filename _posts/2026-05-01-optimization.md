@@ -280,11 +280,11 @@ class RMSprop:
 
 실습칸은 역시 예상과 같이 이러니 저러니 됐다 라는 것 보단 예상과 다르게 나온걸 위주로 적을 예정이다.
 
-![Adadelta](assets/img/adadelta1.png)
+![Adadelta1](assets/img/adadelta1.png)
 
 나머지는 정상적으로 진행되었지만 adadelta만 멈춰있는것을 볼 수 있다. 이는 다른 optimizer와 달리 학습률을 쓰지 않고 unit 조정으로 인한것으로 보인다. 그래서 iteration(30 -> 3000)을 더 돌려봤더니 결과는 이렇게 나왔다.
 
-![Adadelta](assets/img/adadelta2.png)
+![Adadelta2](assets/img/adadelta2.png)
 
 iteration을 높게하니 정상적으로 나온 것을 볼 수 있다.
 
