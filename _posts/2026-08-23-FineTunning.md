@@ -34,6 +34,8 @@ ds = load_dataset("cornell-movie-review-data/rotten_tomatoes")
 
 ### 1차
 
+이리저리
+
 ### 2차
 
 padding 부분말고 eos부분
