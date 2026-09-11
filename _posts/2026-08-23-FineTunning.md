@@ -34,7 +34,7 @@ ds = load_dataset("cornell-movie-review-data/rotten_tomatoes")
 
 ### 1차
 
-이리저리
+이리저리 sdsd
 
 ### 2차
 
