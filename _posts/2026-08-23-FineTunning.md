@@ -244,7 +244,7 @@ AdamW에 대해 알기 전에 L2규제에 대해 알아보자.
 **L2 규제(L2 regularization)** 는 손실 함수에 규제 항을 추가하여 파라미터를 지나치게 커지지 않도록 한 것이다. 아래는 L2 정규화를 적용한 손실함수 식이다.
 
 $$
-L_{\text(total)}=L+\frac{\lambda}{2}||\theta||^2
+L_{\mathrm{total}} = L + \frac{\lambda}{2}\|\theta\|^2
 $$
 
 ![FT4](assets/img/gpt2_ft_4.png)
