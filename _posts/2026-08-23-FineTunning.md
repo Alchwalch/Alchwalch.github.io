@@ -303,9 +303,17 @@ optimizer=optim.AdamW(model.parameters(),lr=5e-5,weight_decay=0.01)
 
 ![FT5](assets/img/gpt2_ft_5.png)
 
+위 그림과 같이 골짜기 같은 구간이 나올 수도 있다. 하지만 optimizer계산상 gradient exploding이 발생할 수도 있다. 이때, Adam의 특성만으로 해결하기 어려우므로 gradient clipping을 이용해서 범위를 명시적으로 정한다.
+
+![FT6](assets/img/gpt2_ft_6.png)
+
+그라디언트의 L2 norm 값이 threshold (max_norm)을 초과하면 벡터 방향은 그대로 유지하되 거리 범위만 제한한다. pytorch코드로는 아래와 같이 나타낸다.
+
 ```python
 nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 ```
+
+아래 그림은 AdamW로 과대적합을 방지하고 gradient clipping으로 이동 범위를 제한하여 학습이 안정적으로 진행된 것을 볼 수 있다.
 
 ![FT4](assets/img/gpt2_ft_4.png)
 
