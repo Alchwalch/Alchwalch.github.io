@@ -8,6 +8,8 @@ tags: [DeepLearning]
 
 ## Introduction
 
+핸즈온 LLM에서 hugging face에 굴러다니는 rotten tomato 데이터셋으로 LLM을 이용해 분류를 하길래 한번 분류 파인튜닝을 해보고자 실습을 진행해 봤다.
+
 ## Reference
 
 밑바닥부터 만들면서 배우는 LLM
