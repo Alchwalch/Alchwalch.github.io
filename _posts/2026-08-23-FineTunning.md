@@ -103,13 +103,50 @@ def collate_fn(
 
 ## Architecture
 
+[GPT2](https://github.com/Alchwalch/Alchwalch.github.io/blob/main/_posts/2026-08-08-GPT2.md)구조를 그대로 가져와 분류 파인튜닝에 맞게 마지막 레이어만 바꾸었다.
 
+```python
+num_classes=2
+model.head = torch.nn.Linear(model.cfg.d_model, num_classes, bias=model.cfg.bias)
+model.to(device)
+```
+
+마지막 ouput을 2개의 unit으로 나타내는 신경망으로 대체했다. 
 
 ## FineTunning
 
+모델 전체 매겨변수가 아닌 일부 매개변수만 조정하여 파인튜닝을 하는 기법인 PEFT를 이용하였다. 모델 전체 파라미터를 동결 시킨다음에 마지막 레이어하고 마지막 어텐션 블록만 동결을 해제하였다.
+
+```python
+for param in model.parameters():
+  param.requires_grad = False
+
+for param in model.blocks[-1].parameters():
+  param.requires_grad = True
+
+for param in model.norm.parameters():
+  param.requires_grad = True
+
+for param in model.head.parameters():
+  param.requires_grad = True
+```
+
 ### 1차
 
-이리저리 sdsd
+훈련 loop를 돌릴 때 아래 함수를 이용하여 모델을 훈련시켰다.
+```python
+  def calc_loss_batch(input_batch, target_batch, model, device):
+    input_batch=input_batch.to(device)
+    target_batch=target_batch.to(device)
+  
+    logits=model(input_batch)[:,-1,:]
+    loss=F.cross_entropy(logits,target_batch)
+    return loss
+```
+
+그리고 훈련을 시킨 결과 아래 그림과 같이 나왔다.
+
+[FT1]
 
 ### 2차
 
