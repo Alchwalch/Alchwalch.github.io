@@ -244,21 +244,13 @@ AdamW에 대해 알기 전에 L2규제에 대해 알아보자.
 **L2 규제(L2 regularization)** 는 손실 함수에 규제 항을 추가하여 파라미터를 지나치게 커지지 않도록 하여 overfitting을 막는다. 아래는 L2 정규화를 적용한 손실함수 식이다.
 
 $$
-L_{\mathrm{total}}(\theta)
-=
-L(\theta)
-+
-\frac{\lambda}{2}\|\theta\|_2^2
+L_{\mathrm{total}}(\theta) = L(\theta)+\frac{\lambda}{2}\|\theta\|_2^2
 $$
 
 위를 미분하면 아래와 같이 표현 된다.
 
 $$
-\nabla_\theta L_{\mathrm{total}}
-=
-\nabla_\theta L
-+
-\lambda\theta
+\nabla_\theta L_{\mathrm{total}}=\nabla_\theta L+\lambda\theta
 $$
 
 L2정규화로 파라미터를 업데이트 하는 방식은 다음식과 같다. 직관적으로 파라미터가 너무 크면 발산하는것을 막는것을 볼 수 있다.
@@ -301,4 +293,30 @@ $$
 
 $$\theta_{t+1} \leftarrow \theta_t - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} - \alpha\lambda\theta_t$$
 
+weight_decay가 없으면 Adam이랑 AdamW는 똑같다. 그런데 위에 그래프를 보면 loss가 팍 줄어들어서 **과대적합**이 발생하는것을 볼 수 있으므로 AdamW를 넣어야 된다. pytorch에서 AdamW에 대해 정의되어 있다.
+
+```python
+optimizer=optim.AdamW(model.parameters(),lr=5e-5,weight_decay=0.01)
+```
+
+다음은 **Gradient Clipping**이다. 
+
+![FT5](assets/img/gpt2_ft_5.png)
+
+```python
+nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+```
+
 ![FT4](assets/img/gpt2_ft_4.png)
+
+정확도는 아래와 같이 나왔다.
+
+```text
+Test Accuracy: 0.8257575757575758
+Train Accuracy: 0.8983787593984962
+Validation Accuracy: 0.8465909090909091
+```
+
+학습률 웜업이나 코사인 감쇠같은 방법으로 더 정확도를 높일 수도 있지만 여기까지 진행했다.
+
+[전체 코드](https://github.com/Alchwalch/Deep-Learning-Study/blob/main/NLP/gpt2-1/Classification_finetunning_gpt2.ipynb)
