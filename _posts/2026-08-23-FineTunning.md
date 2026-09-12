@@ -241,10 +241,64 @@ model.to(device)
 
 AdamW에 대해 알기 전에 L2규제에 대해 알아보자.
 
-**L2 규제(L2 regularization)** 는 손실 함수에 규제 항을 추가하여 파라미터를 지나치게 커지지 않도록 한 것이다. 아래는 L2 정규화를 적용한 손실함수 식이다.
+**L2 규제(L2 regularization)** 는 손실 함수에 규제 항을 추가하여 파라미터를 지나치게 커지지 않도록 하여 overfitting을 막는다. 아래는 L2 정규화를 적용한 손실함수 식이다.
 
 $$
-L_{\mathrm{total}} = L + \frac{\lambda}{2}\|\theta\|^2
+L_{\mathrm{total}}(\theta)
+=
+L(\theta)
++
+\frac{\lambda}{2}\|\theta\|_2^2
 $$
+
+위를 미분하면 아래와 같이 표현 된다.
+
+$$
+\nabla_\theta L_{\mathrm{total}}
+=
+\nabla_\theta L
++
+\lambda\theta
+$$
+
+L2정규화로 파라미터를 업데이트 하는 방식은 다음식과 같다. 직관적으로 파라미터가 너무 크면 발산하는것을 막는것을 볼 수 있다.
+
+$$\theta_{t+1}=\theta_{t}-\alpha(g_t+\lambda\theta_{t})$$
+
+이렇게 기존적인 방식은 $g_t$ 에다가 $\lambda\theta_{t}$ 를 더하는 방식이고 *weight_decay*로 $\lambda$ 를 조절할 수 있다.
+
+Adam 에서는 이 L2 정규화를 아래와 같이 각각 진행했다. Adam에 대해선 [이전 블로그](https://alchwalch.github.io/posts/adam/)에 잘 써져 있다.
+
+$$
+m_t \leftarrow \beta_1 \cdot m_{t-1} + (1-\beta_1) \cdot (g_t+\lambda\theta_t)
+$$
+
+$$
+v_t \leftarrow \beta_2 \cdot v_{t-1} + (1-\beta_2) \cdot (g_t+\lambda\theta_t)^2
+$$
+
+그러나 이렇게 하면 최종 식은 아래와 같기 때문에 본래 잘 작동하지 못하고 상쇄가 된다.
+
+$$\theta_{t+1} \leftarrow \theta_{t} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
+
+그래서 AdamW에서는 위 $m_t$와 $v_t$를 그대로 두고 최종식에서만 L2 정규화를 하자고 제안한다. 햇갈릴 수도 있으므로 좀더 명확한 이해를 위해를 돕기위해서 전체 수식을 적어 놓았다.
+
+$$
+m_t \leftarrow \beta_1 \cdot m_{t-1} + (1-\beta_1) \cdot g_t
+$$
+
+$$
+v_t \leftarrow \beta_2 \cdot v_{t-1} + (1-\beta_2) \cdot g_t^2
+$$
+
+$$
+\hat{m}_t \leftarrow m_t / (1-\beta_1^t)
+$$
+
+$$
+\hat{v}_t \leftarrow v_t / (1-\beta_2^t)
+$$
+
+$$\theta_{t+1} \leftarrow \theta_t - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} - \alpha\lambda\theta_t$$
 
 ![FT4](assets/img/gpt2_ft_4.png)
