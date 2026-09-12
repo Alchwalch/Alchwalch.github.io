@@ -12,6 +12,8 @@ tags: [DeepLearning]
 
 밑바닥부터 만들면서 배우는 LLM
 
+밑바닥 부터 시작하는 딥러닝 6
+
 [nanoGPT](https://github.com/karpathy/nanogpt)
 
 핸즈온 LLM
@@ -225,12 +227,24 @@ load_weights_into_gpt(model,params)
 model.to(device)
 ```
 
-그러기 위해선 padding부분을 다 지우고 eos로 교체할 필요가 있었음. (임의로 추가한 padding id가 모델 로드를 방해함)
+이대로 그대로 실행하기는 좀 힘들었다. pad_id를 임의로 아이디를 더 부여를 했었는데 그게 모델을 로드하는 과정에서 걸린것이다. 그러기 위해선 padding부분을 다 지우고 eos로 교체할 필요가 있었다.
+
+그 후의 실행결과는 매우 특이하게 되어 있었다.
 
 ![FT3](assets/img/gpt2_ft_3.png)
 
+근데 accuracy가 여전히 50%를 맴돌고 있었다.
+
 ### 4차
 
-AdamW로 교체 + 그라디언트 클리핑
+여기서 크게 2가지를 개선했다. 먼저 Adam을 AdamW로 옵티마이저를 교체 하였다. 
+
+AdamW에 대해 알기 전에 L2규제에 대해 알아보자.
+
+**L2 규제(L2 regularization)** 는 손실 함수에 규제 항을 추가하여 파라미터를 지나치게 커지지 않도록 한 것이다. 아래는 L2 정규화를 적용한 손실함수 식이다.
+
+$$
+L_{\text(total)}=L+\frac{\lambda}{2}||\theta||^2
+$$
 
 ![FT4](assets/img/gpt2_ft_4.png)
