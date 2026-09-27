@@ -236,7 +236,7 @@ dropout_rate를 높이고 label_smoothing을 하기로 함. label_smoothing은 �
 
 $$\sum_{i=1}^{D} y_i \log x_i + (1-y_i) \cdot \log(1-x_i)$$
 
-여기서 $y_i$는 원래 1아니면 0이 되어야 하지만 label_smoothing에 부여하는 값을 $\epsilon$이라 했을 때, $y_i=1-\epsilon으로 표현할 수 있다.
+여기서 $y_i$는 원래 1아니면 0이 되어야 하지만 label_smoothing에 부여하는 값을 $\epsilon$이라 했을 때 다음과 같이 쓸 수 있다.
 
 $$\sum_{i=1}^{D} (1-\epsilon) y_i \log x_i + \epsilon (1-y_i) \cdot \log(1-x_i)$$
 
