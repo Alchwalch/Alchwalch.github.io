@@ -232,7 +232,7 @@ validation, train에 대한 평가를 매 epoch에서 기록함. 결과가 다�
 
 - overfitting
 
-dropout_rate를 높이고 label_smoothing을 하기로 함.
+dropout_rate를 높이고 label_smoothing을 하기로 함. label_smoothing은 정답 레이블에 대한 과도한 확신으로 overfitting이 되는걸 막게 해준다. label_smoothing을 설정하지 않았을때 (label_smoothing=0.0) cross_entropy는 알다시피 다음과 같다.
 
 ```python
 TRANSFORMER_BASE_CONFIG={
